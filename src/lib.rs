@@ -1,8 +1,10 @@
 use std::error::Error;
 use std::env;
 use std::fmt;
+use std::str;
 use std::thread;
 use std::time::{Duration, Instant};
+use figlet_rs::FIGfont;
 
 #[derive(Debug, Clone)]
 pub struct ParserError;
@@ -76,17 +78,20 @@ impl Config {
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     let start_time = Instant::now();
     loop {
-        thread::sleep(Duration::from_millis(1000));
         let elapsed_time = start_time.elapsed().as_secs() as usize;
-
-        println!("{}", config.seconds - elapsed_time);
-
-        // clear terminal
-        print!("\x1B[2J\x1B[1;1H");
-
         if elapsed_time >= config.seconds {
             return Ok(())
         }
+
+        // clear terminal
+        print!("\x1B[2J\x1B[1;1H");
+        
+        let font = FIGfont::standand().unwrap();
+        let time_left = config.seconds - elapsed_time;
+        let figure = font.convert(time_left.to_string().as_str());
+        println!("{}", figure.unwrap());
+
+        thread::sleep(Duration::from_millis(1000));
     }
 }
 

@@ -1,5 +1,6 @@
 use std::env;
 use std::process;
+use notify_rust::Notification;
 
 use timers::Config;
 
@@ -17,4 +18,10 @@ fn main () {
 
         process::exit(1);
     }
+
+    Notification::new()
+        .summary("Timer")
+        .body("Time's up!")
+        .icon("clock")
+        .show().expect("Error displaying notification");
 }

@@ -3,7 +3,7 @@ use std::env;
 use std::fmt;
 use std::str;
 use std::thread;
-use std::time::{Duration, Instant};
+use std::time::{Duration};
 use figlet_rs::FIGfont;
 
 #[derive(Debug, Clone)]
@@ -15,36 +15,33 @@ impl fmt::Display for ParserError {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct Time {
+    pub seconds: usize,
+    pub minutes: usize,
+    pub hours: usize
+}
+
 pub struct Config {
-    pub seconds: usize
+    pub time: Time,
 }
 
 impl Config {
     pub fn new(mut args: env::Args) -> Result<Config, &'static str> {
         args.next();
 
-        let seconds= match args.next() {
-            Some(arg) => Config::parse_time_string(&arg).expect("Error parsing time string"),
+        match args.next() {
+            Some(arg) => Ok(Config::parse_arg(&arg).expect("Error parsing time string")),
             None => return Err("Didn't get a countdown"),
-        };
-
-        Ok(Config {
-            seconds,
-        })
+        }
     }
 
-    /// Parses the time argument into hours, minutes and seconds
+    /// Parses the argument into hours, minutes and seconds
     /// 
-    /// h -> hours
-    /// m -> minutes
-    /// s -> seconds
-    ///
-    /// Examples:
-    /// 1h, 2m, 3s (integral)
-    /// 1h2m, 10m10s (combined)
+    /// Returns `Config`
     ///
     /// The`parse_time_string` function will throw `ParserError`
-    fn parse_time_string(time_string: &str) -> Result<usize, ParserError> {
+    fn parse_arg(time_string: &str) -> Result<Config, ParserError> {
         let mut hours: usize = 0;
         let mut minutes: usize = 0;
         let mut seconds: usize = 0;
@@ -69,45 +66,75 @@ impl Config {
             };
         }
 
-        let seconds = hours * 60 * 60 + minutes * 60 + seconds;
-
-        Ok(seconds)
+        Ok(Config {
+            time: Time {
+                seconds,
+                minutes,
+                hours
+            }
+        })
     }
 }
 
-pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
-    let start_time = Instant::now();
-    loop {
-        let elapsed_time = start_time.elapsed().as_secs() as usize;
-        if elapsed_time >= config.seconds {
-            return Ok(())
+impl Time {
+    fn tick(&mut self) -> bool {
+        if self.seconds > 0 {
+            self.seconds = self.seconds - 1;
+        } else {
+            if self.minutes > 0 {
+                self.minutes = self.minutes - 1;
+                self.seconds = 59;
+            } else {
+                if self.hours > 0 {
+                    self.hours = self.hours - 1;
+                    self.minutes = 59;
+                    self.seconds = 59;
+                } else {
+                    return false;
+                }
+            }
         }
 
+        true
+    }
+
+    fn as_string(&self) -> String {
+        let mut time_string = String::new();
+
+        if self.hours > 0 {
+            time_string.push_str(format!("{}h", self.hours).as_str());
+        } 
+
+        if self.minutes > 0 {
+            time_string.push_str(format!("{}m", self.minutes).as_str());
+        }
+
+        if self.seconds > 0 {
+            time_string.push_str(format!("{}s", self.seconds).as_str());
+        }
+
+        time_string
+    }
+}
+
+
+pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
+    let mut time_left = config.time.clone();
+    loop {
         // clear terminal
         print!("\x1B[2J\x1B[1;1H");
         
         let font = FIGfont::standand().unwrap();
-        let time_left = config.seconds - elapsed_time;
-        let figure = font.convert(time_left.to_string().as_str());
+        let figure = font.convert(time_left.as_string().as_str());
         println!("{}", figure.unwrap());
 
         thread::sleep(Duration::from_millis(1000));
+
+        // exit loop when timer runs out
+        if !time_left.tick() {
+            break;
+        }
     }
-}
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_parse_time_string() {
-        // checking with integral timestamp
-        assert_eq!(Config::parse_time_string("1h").unwrap(), 60 * 60);
-        assert_eq!(Config::parse_time_string("1m").unwrap(), 60);
-        assert_eq!(Config::parse_time_string("1s").unwrap(), 1);
-
-        // checking with combined timestamp
-        assert_eq!(Config::parse_time_string("1h2m").unwrap(), 60 * 60 + 2 * 60);
-        assert_eq!(Config::parse_time_string("10m10s").unwrap(), 10 * 60 + 10);
-    }
+    Ok(())
 }

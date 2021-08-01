@@ -16,17 +16,18 @@ impl fmt::Display for ParserError {
 }
 
 #[derive(Debug, Clone)]
-pub struct Time {
+pub struct Timer {
     pub seconds: usize,
     pub minutes: usize,
     pub hours: usize
 }
 
 pub struct Config {
-    pub time: Time,
+    pub timer: Timer,
 }
 
 impl Config {
+    /// returns new `Config`
     pub fn new(mut args: env::Args) -> Result<Config, &'static str> {
         args.next();
 
@@ -67,7 +68,7 @@ impl Config {
         }
 
         Ok(Config {
-            time: Time {
+            timer: Timer {
                 seconds,
                 minutes,
                 hours
@@ -76,7 +77,10 @@ impl Config {
     }
 }
 
-impl Time {
+impl Timer {
+    /// counts down timer by one second
+    /// 
+    /// Returns `false` when timer runs out
     fn tick(&mut self) -> bool {
         if self.seconds > 0 {
             self.seconds = self.seconds - 1;
@@ -98,6 +102,7 @@ impl Time {
         true
     }
 
+    /// Returns remaining time in clock format
     fn as_string(&self) -> String {
         let mut time_string = String::new();
 
@@ -119,7 +124,7 @@ impl Time {
 
 
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
-    let mut time_left = config.time.clone();
+    let mut time_left = config.timer.clone();
     loop {
         // clear terminal
         print!("\x1B[2J\x1B[1;1H");
@@ -137,4 +142,30 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_tick() {
+        // return false when timer runs out
+        let mut timer = Timer {
+            seconds:0,
+            minutes:0,
+            hours:0,
+        };
+
+        assert_eq!(timer.tick(), false);
+
+        // return true if timer isn't timed out
+        let mut timer = Timer {
+            seconds:2,
+            minutes:0,
+            hours:0,
+        };
+
+        assert_eq!(timer.tick(), true);
+    }
 }

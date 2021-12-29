@@ -1,10 +1,10 @@
+use notify_rust::Notification;
 use std::env;
 use std::process;
-use notify_rust::Notification;
 
 use timers::Config;
 
-fn main () {
+fn main() {
     // clear terminal
     print!("\x1B[2J\x1B[1;1H");
 
@@ -23,5 +23,6 @@ fn main () {
         .summary("Timer")
         .body("Time's up!")
         .icon("clock")
-        .show().expect("Error displaying notification");
+        .show()
+        .expect("Error displaying notification");
 }

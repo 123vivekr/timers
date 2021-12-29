@@ -1,10 +1,10 @@
-use std::error::Error;
+use figlet_rs::FIGfont;
 use std::env;
+use std::error::Error;
 use std::fmt;
 use std::str;
 use std::thread;
-use std::time::{Duration};
-use figlet_rs::FIGfont;
+use std::time::{Duration, Instant};
 
 #[derive(Debug, Clone)]
 pub struct ParserError;
@@ -19,7 +19,7 @@ impl fmt::Display for ParserError {
 pub struct Timer {
     pub seconds: usize,
     pub minutes: usize,
-    pub hours: usize
+    pub hours: usize,
 }
 
 pub struct Config {
@@ -38,7 +38,7 @@ impl Config {
     }
 
     /// Parses the argument into hours, minutes and seconds
-    /// 
+    ///
     /// Returns `Config`
     ///
     /// The`parse_time_string` function will throw `ParserError`
@@ -54,15 +54,15 @@ impl Config {
                 'h' => {
                     hours = s.parse::<usize>().unwrap();
                     s = String::new();
-                },
+                }
                 'm' => {
                     minutes = s.parse::<usize>().unwrap();
                     s = String::new();
-                },
+                }
                 's' => {
                     seconds = s.parse::<usize>().unwrap();
                     s = String::new();
-                },
+                }
                 _ => s.push(char),
             };
         }
@@ -71,15 +71,15 @@ impl Config {
             timer: Timer {
                 seconds,
                 minutes,
-                hours
-            }
+                hours,
+            },
         })
     }
 }
 
 impl Timer {
     /// counts down timer by one second
-    /// 
+    ///
     /// Returns `false` when timer runs out
     fn tick(&mut self) -> bool {
         if self.seconds > 0 {
@@ -108,7 +108,7 @@ impl Timer {
 
         if self.hours > 0 {
             time_string.push_str(format!("{}h", self.hours).as_str());
-        } 
+        }
 
         if self.minutes > 0 {
             time_string.push_str(format!("{}m", self.minutes).as_str());
@@ -135,7 +135,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     loop {
         // clear terminal
         print!("\x1B[2J\x1B[1;1H");
-        
+
         println!("{}", timer);
 
         thread::sleep(Duration::from_millis(1000));
@@ -158,20 +158,37 @@ mod tests {
     fn test_tick() {
         // return false when timer runs out
         let mut timer = Timer {
-            seconds:0,
-            minutes:0,
-            hours:0,
+            seconds: 0,
+            minutes: 0,
+            hours: 0,
         };
 
         assert_eq!(timer.tick(), false);
 
         // return true if timer isn't timed out
         let mut timer = Timer {
-            seconds:2,
-            minutes:0,
-            hours:0,
+            seconds: 2,
+            minutes: 0,
+            hours: 0,
         };
 
         assert_eq!(timer.tick(), true);
+    }
+
+    #[test]
+    fn ten_second_timer_should_run_for_exactly_ten_seconds() {
+        let start_time = Instant::now();
+        let config = Config {
+            timer: Timer {
+                seconds: 10,
+                minutes: 0,
+                hours: 0,
+            },
+        };
+
+        run(config).unwrap();
+
+        let elapsed_time = start_time.elapsed();
+        assert_eq!(elapsed_time, Duration::from_secs(10));
     }
 }

@@ -122,21 +122,27 @@ impl Timer {
     }
 }
 
+impl fmt::Display for Timer {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let font = FIGfont::standand().unwrap();
+        let figure = font.convert(self.as_string().as_str()).unwrap();
+        write!(f, "{}", figure)
+    }
+}
 
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
-    let mut time_left = config.timer.clone();
+    let mut timer = config.timer;
     loop {
         // clear terminal
         print!("\x1B[2J\x1B[1;1H");
         
-        let font = FIGfont::standand().unwrap();
-        let figure = font.convert(time_left.as_string().as_str());
-        println!("{}", figure.unwrap());
+        println!("{}", timer);
 
         thread::sleep(Duration::from_millis(1000));
 
         // exit loop when timer runs out
-        if !time_left.tick() {
+        // TODO: separate tick and end check
+        if !timer.tick() {
             break;
         }
     }

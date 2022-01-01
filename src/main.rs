@@ -13,11 +13,7 @@ fn main() {
         process::exit(1);
     });
 
-    if let Err(e) = timers::run(config) {
-        eprintln!("Application error: {}", e);
-
-        process::exit(1);
-    }
+    timers::run(config);
 
     Notification::new()
         .summary("Timer")

@@ -1,10 +1,11 @@
 use figlet_rs::FIGfont;
 use std::env;
-use std::error::Error;
 use std::fmt;
 use std::str;
+use std::time::Duration;
 use std::thread;
-use std::time::{Duration, Instant};
+use timer::Timer as TimerLib;
+use chrono;
 
 #[derive(Debug, Clone)]
 pub struct ParserError;
@@ -125,34 +126,37 @@ impl Timer {
 impl fmt::Display for Timer {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let font = FIGfont::standand().unwrap();
-        let figure = font.convert(self.as_string().as_str()).unwrap();
-        write!(f, "{}", figure)
+        let figure = font.convert(self.as_string().as_str());
+
+        match figure {
+            Some(s) => write!(f, "{}", s),
+            None => write!(f, "")
+        }
     }
 }
 
-pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
+pub fn run(config: Config) {
     let mut timer = config.timer;
-    loop {
-        // clear terminal
+
+    let timer_lib = TimerLib::new();
+
+    let total_time = timer.seconds + timer.minutes * 60 + timer.hours * 60 * 60;
+
+    println!("{}", timer);
+    let _guard = timer_lib.schedule_repeating(chrono::Duration::seconds(1), move || {
+        timer.tick();
+        // clear screen
         print!("\x1B[2J\x1B[1;1H");
-
         println!("{}", timer);
+    });
 
-        thread::sleep(Duration::from_millis(1000));
-
-        // exit loop when timer runs out
-        // TODO: separate tick and end check
-        if !timer.tick() {
-            break;
-        }
-    }
-
-    Ok(())
+    thread::sleep(Duration::from_secs(total_time as u64));
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::time::Instant;
 
     #[test]
     fn test_tick() {
@@ -186,7 +190,7 @@ mod tests {
             },
         };
 
-        run(config).unwrap();
+        run(config);
 
         let elapsed_time = start_time.elapsed();
         assert_eq!(elapsed_time, Duration::from_secs(10));

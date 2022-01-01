@@ -157,6 +157,7 @@ pub fn run(config: Config) {
 mod tests {
     use super::*;
     use std::time::Instant;
+    use more_asserts;
 
     #[test]
     fn test_tick() {
@@ -180,8 +181,7 @@ mod tests {
     }
 
     #[test]
-    fn ten_second_timer_should_run_for_exactly_ten_seconds() {
-        let start_time = Instant::now();
+    fn ten_second_timer_should_run_for_around_ten_seconds() {
         let config = Config {
             timer: Timer {
                 seconds: 10,
@@ -189,10 +189,14 @@ mod tests {
                 hours: 0,
             },
         };
+        let required_time = Duration::from_secs(10);
+        let delta = Duration::from_millis(10);
+        let estimated_time = required_time + delta;
 
+        let start_time = Instant::now();
         run(config);
-
         let elapsed_time = start_time.elapsed();
-        assert_eq!(elapsed_time, Duration::from_secs(10));
+
+        more_asserts::assert_le!(elapsed_time, estimated_time);
     }
 }

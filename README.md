@@ -7,9 +7,6 @@ A countdown timer for your command line.
 - Countdown display
 - Timer end notification
 
-## Demo
-[![asciicast](https://asciinema.org/a/WyfOdVB4MtfLIhQXgvxNMbALj.svg)](https://asciinema.org/a/WyfOdVB4MtfLIhQXgvxNMbALj)
-
 ## Usage
 
 Set countdown for 1 minute

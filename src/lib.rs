@@ -1,4 +1,4 @@
-use chrono;
+
 use figlet_rs::FIGfont;
 use std::fmt;
 use std::fs::OpenOptions;
@@ -85,20 +85,16 @@ impl Timer {
     /// Returns `false` when timer runs out
     fn tick(&mut self) -> bool {
         if self.seconds > 0 {
-            self.seconds = self.seconds - 1;
+            self.seconds -= 1;
+        } else if self.minutes > 0 {
+            self.minutes -= 1;
+            self.seconds = 59;
+        } else if self.hours > 0 {
+            self.hours -= 1;
+            self.minutes = 59;
+            self.seconds = 59;
         } else {
-            if self.minutes > 0 {
-                self.minutes = self.minutes - 1;
-                self.seconds = 59;
-            } else {
-                if self.hours > 0 {
-                    self.hours = self.hours - 1;
-                    self.minutes = 59;
-                    self.seconds = 59;
-                } else {
-                    return false;
-                }
-            }
+            return false;
         }
 
         true
@@ -192,7 +188,7 @@ fn write_to_output_file(output_filename: String, timer: Timer) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use more_asserts;
+    
     use std::path::Path;
     use std::time::Instant;
     use tempfile::tempdir;

@@ -4,8 +4,6 @@ use notify_rust::Notification;
 use timers::Config;
 
 fn main() {
-    // clear terminal
-    print!("\x1B[2J\x1B[1;1H");
 
     let cmd = Command::new("timer")
         .author("Vivek R, 123vivekr@gmail.com")
@@ -24,6 +22,9 @@ fn main() {
     let output_filename = cmd.get_one::<String>("output").map(|s| s.to_string());
 
     let config = Config::new(time_string, output_filename);
+
+    // clear terminal
+    print!("\x1B[2J\x1B[1;1H");
 
     timers::run(config);
 

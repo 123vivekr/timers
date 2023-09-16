@@ -83,6 +83,7 @@ impl Timer {
     /// counts down timer by one second
     ///
     /// Returns `false` when timer runs out
+    #[inline]
     fn tick(&mut self) -> bool {
         if self.seconds > 0 {
             self.seconds -= 1;
